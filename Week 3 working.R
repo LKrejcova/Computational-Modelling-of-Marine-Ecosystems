@@ -43,23 +43,44 @@ library(fields)
 # param.yield <- 10^(-9)
 
 
-# these parameters work
+# # these parameters work
+# n <- 75
+# d <- 100 #[m]
+# param.deltaZ <- d/n #[m]
+# t <- 300
+# param.u <- 0.042 * 24 #[m/day]
+# param.D <- 43.2 #[m^2/day]
+# z <- c()
+# param.kw <- 0.2 #[/m]
+# param.kp <- 15e-12 #[m^2 / cell]
+# param.Iin <- 350 * 60 * 60 * 24 #[µmol photons /m^2 /day]
+# param.HI <- 30 * 60 * 60 *24 # [µmol photons / m^2 / day]
+# param.gmax <- 0.04 * 24 #[/day]
+# param.m <- 0.01 * 24 #[/day]
+# param.HN <- 0.0425 # [mmol nutrient / m^3]
+# param.Nb <- 5 # [mmol nutrient / m^3]
+# param.yield <- 1e-9 # [mmol nutrient / cell]
+
+# new parameters in mmol.N
 n <- 75
 d <- 100 #[m]
 param.deltaZ <- d/n #[m]
 t <- 300
 param.u <- 0.042 * 24 #[m/day]
-param.D <- 43.2 #[m^2/day]
+param.D <- 5 #[m^2/day]
 z <- c()
-param.kw <- 0.2 #[/m]
-param.kp <- 15e-12 #[m^2 / cell]
+param.kw <-  0.0375 #[/m]
+param.kp <-  0.05 #[m^2 / mmol.N]
 param.Iin <- 350 * 60 * 60 * 24 #[µmol photons /m^2 /day]
 param.HI <- 30 * 60 * 60 *24 # [µmol photons / m^2 / day]
-param.gmax <- 0.04 * 24 #[/day]
-param.m <- 0.01 * 24 #[/day]
-param.HN <- 0.0425 # [mmol nutrient / m^3]
-param.Nb <- 5 # [mmol nutrient / m^3]
+param.gmax <- 0.5 #[/day]
+param.m <-  0.03 #[/day]
+param.HN <-  0.3 # [mmol.N / m^3]
+param.Nb <- 3 # [mmol.N / m^3]
 param.yield <- 1e-9 # [mmol nutrient / cell]
+param.gamma <- 1.5 # [m^3 /mmol N / day]
+param.w <- 15 # [m/day]
+param.rem <- 0.1 # [/day]
 
 params <- list(param.D = param.D , param.Iin = param.Iin, param.kw = 0.2, param.kp = param.kp,
                 param.m = param.m, param.u = param.u, d = d, param.deltaZ = param.deltaZ, n = n,
@@ -187,6 +208,27 @@ legend("topright", inset=c(-0.5, 0), legend = c("Light", "Nutrients"), lty = c(1
 plot(x = phi.out[nrow(phi.out),], y = n:1, type = "l",
      main = "Limitation by light or nutrients", ylab = "Distance from seabed [m]",
      xlab = "Cell concentration [cell/m^3]", lwd = 3)
+
+
+# sensitivity analysis
+
+# find depth of maximum phytoplankton concentration
+find.max <- function(phi, params){
+  phi.max <- max(phi)
+  depth.max <- (which.max.matrix(phi))[2]*param.deltaZ + 0.5 * param.deltaZ
+  return(c(phi.max, depth.max))
+}
+
+find.max(phi.out,params)
+
+plot(y = find.max(phi.out, params)[1], x = kp )
+
+# loop over different kp values
+for (i in 1:10){
+  param.kp <- (0.0)
+}
+
+
 
 # alternative approach
 # light <- lightloss(phi.out[,1])
