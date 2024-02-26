@@ -66,11 +66,11 @@ n <- 75
 d <- 100 #[m]
 param.deltaZ <- d/n #[m]
 t <- 300
-param.u <- 0.042 * 24 #[m/day]
+param.u <- 0.0042 * 24 #[m/day]
 param.D <- 5 #[m^2/day]
 z <- c()
 param.kw <-  0.0375 #[/m]
-param.kp <-  0.05 #[m^2 / mmol.N]
+param.kp <- 0.05 #[m^2 / mmol.N]
 param.Iin <- 350 * 60 * 60 * 24 #[µmol photons /m^2 /day]
 param.HI <- 30 * 60 * 60 *24 # [µmol photons / m^2 / day]
 param.gmax <- 0.5 #[/day]
@@ -81,6 +81,8 @@ param.yield <- 1e-9 # [mmol nutrient / cell]
 param.gamma <- 1.5 # [m^3 /mmol N / day]
 param.w <- 15 # [m/day]
 param.rem <- 0.1 # [/day]
+
+#dev.off()
 
 params <- list(param.D = param.D , param.Iin = param.Iin, param.kw = 0.2, param.kp = param.kp,
                 param.m = param.m, param.u = param.u, d = d, param.deltaZ = param.deltaZ, n = n,
@@ -203,7 +205,7 @@ plot(x = growth.lim.L, y = n:1, type = "l", xlim = c(0, max(growth.lim.N)),
      main = "Limitation by light or nutrients", ylab = "Distance from seabed [m]",
      xlab = "Growth limitation factor", lwd = 3)
 lines(x = growth.lim.N, y = n:1, type = "l", lwd = 3, lty = 2)
-legend("topright", inset=c(-0.5, 0), legend = c("Light", "Nutrients"), lty = c(1,2), lwd = 2)
+legend("topright", inset=c(-0.3, 0), legend = c("Light", "Nutrients"), lty = c(1,2), lwd = 2)
 
 plot(x = phi.out[nrow(phi.out),], y = n:1, type = "l",
      main = "Limitation by light or nutrients", ylab = "Distance from seabed [m]",
@@ -221,11 +223,46 @@ find.max <- function(phi, params){
 
 find.max(phi.out,params)
 
-plot(y = find.max(phi.out, params)[1], x = kp )
+plot(y = seq(0, 100, 25), x = seq(0.03, 0.07, 0.01), col = 0,
+     main = "Effect of light absorbtion on phytoplankton maximum",
+     xlab = "Light absorbtion of phytoplankton [m^2/mmolN]",
+     ylab = "Phytoplankton concentration [mmolN / m^3]")
+
+# loop over different kp values
+ for (i in 1:10){
+   param.kp <- (seq(0.03, 0.07, 0.005))[i]
+   
+   times <- seq(0,500,1)  
+   
+   derivative.out <- ode(Y.init, times, derivative, parms = params)
+   
+   phi.out <- derivative.out[,2:(n+1)]
+   N.out <- derivative.out[,(n+2):(2*n+1)]
+   
+   find.max(phi.out, params)
+   
+   points(y = find.max(phi.out, params)[1], x = param.kp )
+ }
+
+plot(y = seq(0, 100, 25), x = seq(0.03, 0.07, 0.01), col = 0,
+     main = "Effect of light absorbtion on phytoplankton maximum depth",
+     xlab = "Light absorbtion of phytoplankton [m^2/mmolN]",
+     ylab = "Phytoplankton maximum depth [m]")
 
 # loop over different kp values
 for (i in 1:10){
-  param.kp <- (0.0)
+  param.kp <- (seq(0.03, 0.07, 0.005))[i]
+  
+  times <- seq(0,500,1)  
+  
+  derivative.out <- ode(Y.init, times, derivative, parms = params)
+  
+  phi.out <- derivative.out[,2:(n+1)]
+  N.out <- derivative.out[,(n+2):(2*n+1)]
+  
+  find.max(phi.out, params)
+  
+  points(y = 100-find.max(phi.out, params)[2], x = param.kp )
 }
 
 
