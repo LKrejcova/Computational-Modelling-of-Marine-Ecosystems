@@ -66,7 +66,7 @@ n <- 75
 d <- 100 #[m]
 param.deltaZ <- d/n #[m]
 t <- 300
-param.u <- 0.0042 * 24 #[m/day]
+param.u <- 0.0042 * 24 * 2 #[m/day]
 param.D <- 5 #[m^2/day]
 z <- c()
 param.kw <-  0.0375 #[/m]
@@ -217,7 +217,7 @@ plot(x = phi.out[nrow(phi.out),], y = n:1, type = "l",
 # find depth of maximum phytoplankton concentration
 find.max <- function(phi, params){
   phi.max <- max(phi)
-  depth.max <- (which.max.matrix(phi))[2]*param.deltaZ + 0.5 * param.deltaZ
+  depth.max <- z[(which.max.matrix(phi))[2]]
   return(c(phi.max, depth.max))
 }
 
@@ -244,8 +244,8 @@ plot(y = seq(0, 100, 25), x = seq(0.03, 0.07, 0.01), col = 0,
    points(y = find.max(phi.out, params)[1], x = param.kp )
  }
 
-plot(y = seq(0, 100, 25), x = seq(0.03, 0.07, 0.01), col = 0,
-     main = "Effect of light absorbtion on phytoplankton maximum depth",
+plot(y = seq(0, 4, 1), x = seq(0.03, 0.07, 0.01), col = 0,
+     main = "Effect of light absorbtion of phytoplankton on depth of phytoplankton maximum",
      xlab = "Light absorbtion of phytoplankton [m^2/mmolN]",
      ylab = "Phytoplankton maximum depth [m]")
 
@@ -262,14 +262,33 @@ for (i in 1:10){
   
   find.max(phi.out, params)
   
-  points(y = 100-find.max(phi.out, params)[2], x = param.kp )
+  points(y = find.max(phi.out, params)[2], x = param.kp )
 }
 
+plot(y = seq(0, 100, 25), x = seq(0, 100, 25), col = 0,
+     main = "Effect of light absorbtion on phytoplankton maximum",
+     xlab = "Light absorbtion of phytoplankton [m^2/mmolN]",
+     ylab = "Phytoplankton concentration [mmolN / m^3]")
 
+for (i in 1:10){
+  param.kp <- (seq(0.03, 0.07, 0.005))[i]
 
-# alternative approach
-# light <- lightloss(phi.out[,1])
-# for (i in 2:ncol(phi.out)){
-#   new_light <- lightloss(phi.out[,i])
-#   light <- cbind(light, new_light)
-# }
+  times <- seq(0,500,1)
+
+  derivative.out <- ode(Y.init, times, derivative, parms = params)
+
+  phi.out <- derivative.out[,2:(n+1)]
+  N.out <- derivative.out[,(n+2):(2*n+1)]
+
+  lines(x = tail(phi.out,1))
+}
+
+# 
+# 
+# 
+# # alternative approach
+# # light <- lightloss(phi.out[,1])
+# # for (i in 2:ncol(phi.out)){
+# #   new_light <- lightloss(phi.out[,i])
+# #   light <- cbind(light, new_light)
+# # }
