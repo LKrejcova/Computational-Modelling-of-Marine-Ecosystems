@@ -43,25 +43,46 @@ library(fields)
 # param.yield <- 10^(-9)
 
 
-# these parameters work
+# # these parameters work
+# n <- 75
+# d <- 100 #[m]
+# param.deltaZ <- d/n #[m]
+# t <- 300
+# param.u <- 0.042 * 24 #[m/day]
+# param.D <- 43.2 #[m^2/day]
+# z <- c()
+# param.kw <- 0.2 #[/m]
+# param.kp <- 15e-12 #[m^2 / cell]
+# param.Iin <- 350 * 60 * 60 * 24 #[µmol photons /m^2 /day]
+# param.HI <- 30 * 60 * 60 *24 # [µmol photons / m^2 / day]
+# param.gmax <- 0.04 * 24 #[/day]
+# param.m <- 0.03 #[/day]
+# param.HN <- 0.0425 # [mmol nutrient / m^3]
+# param.Nb <- 5 # [mmol nutrient / m^3]
+# param.yield <- 1e-9 # [mmol nutrient / cell]
+# param.gamma <- 0.25 # [m^3 /mmol N / day]
+# param.w <- 5 # [m/day]
+# param.rem <- 0.1 # [/day]
+
+# new parameters in mmol.N
 n <- 75
 d <- 100 #[m]
 param.deltaZ <- d/n #[m]
 t <- 300
-param.u <- 0.042 * 24 #[m/day]
-param.D <- 43.2 #[m^2/day]
+param.u <- 0.5 #0.042 * 24 #[m/day]
+param.D <- 5 #[m^2/day]
 z <- c()
-param.kw <- 0.2 #[/m]
-param.kp <- 15e-12 #[m^2 / cell]
+param.kw <-  0.0375 #[/m]
+param.kp <-  0.05 #[m^2 / mmol.N]
 param.Iin <- 350 * 60 * 60 * 24 #[µmol photons /m^2 /day]
 param.HI <- 30 * 60 * 60 *24 # [µmol photons / m^2 / day]
-param.gmax <- 0.04 * 24 #[/day]
-param.m <- 0.03 #[/day]
-param.HN <- 0.0425 # [mmol nutrient / m^3]
-param.Nb <- 5 # [mmol nutrient / m^3]
+param.gmax <- 0.5 #[/day]
+param.m <-  0.03 #[/day]
+param.HN <-  0.3 # [mmol.N / m^3]
+param.Nb <- 3 # [mmol.N / m^3]
 param.yield <- 1e-9 # [mmol nutrient / cell]
-param.gamma <- 0.25 # [m^3 /mmol N / day]
-param.w <- 5 # [m/day]
+param.gamma <- 1.5 # [m^3 /mmol N / day]
+param.w <- 15 # [m/day]
 param.rem <- 0.1 # [/day]
 
 # reset graphical parameters
@@ -87,15 +108,15 @@ N <- rep(1,n) # set up N0
 
 P <- phi[1]
 
-D <- rep(0.1,n)
+detr <- rep(1,n)
 
-Y.init <- c(phi,N,D)
+D <- detr[1]
+
+Y.init <- c(phi,N,detr)
 
 # set up light intensity
-#leonor
-lightloss = function (P,D, param){
-  integral = cumsum((param.kw + param.kp*P)*param.deltaZ) -
-    0.5*param.deltaZ*(param.kw + param.kp*(P+D))
+lightloss = function (P, D, param){
+  integral = cumsum((param.kw + param.kp*P*param.deltaZ) - 0.5*param.deltaZ*(param.kw + param.kp*P))
   I <- param.Iin*exp(- integral)
   
   return(I)
@@ -109,11 +130,11 @@ derivative = function(t, Y, params) {
   
   phi <- Y[1:n]
   N <- Y[(n+1):(2*n)]
-  Det <- Y[((2*n)+1):(3*n)]
+  detr <- Y[(2*n+1):(3*n)]
   
   Ja <- rep(0, n+1)
   Jd <- rep(0, n+1)
-  JN <- rep(0,n+1)
+  JN <- rep(0, n+1)
   Ja_D <- rep(0, n+1)
   Jd_D <- rep(0, n+1)
   
@@ -121,8 +142,8 @@ derivative = function(t, Y, params) {
     Ja[i] <- param.u*phi[i-1]
     Jd[i] <- -param.D*(phi[i]-phi[i-1])/param.deltaZ
     JN[i] <- -param.D*(N[i]-N[i-1])/param.deltaZ 
-    Ja_D[i] <- param.w*Det[i-1]
-    Jd_D[i] <- -param.D*(Det[i]-Det[i-1])/param.deltaZ
+    Ja_D[i] <- param.w*detr[i-1]
+    Jd_D[i] <- -param.D*(detr[i]-detr[i-1])/param.deltaZ
   }
   
   #Boundary conditions  
@@ -136,21 +157,21 @@ derivative = function(t, Y, params) {
   JN[n+1] <- -param.D*(param.Nb-N[n])/param.deltaZ
   
   Ja_D[1] <- 0
-  Ja_D[n+1] <- -param.w*Det[n]
+  Ja_D[n+1] <- 0
   
   Jd_D[1] <- 0
-  Jd_D[n+1] <- 0
+  Jd_D[n+1] <- param.w*detr[n]/param.deltaZ
   
   J <- Ja + Jd 
   
   JDet <- Ja_D + Jd_D
   
-  dphi_dt <- seq (1,n,1)
-  dN_dt <- seq (1,n,1)
-  dDet_dt <- seq (1,n,1)
+  dphi_dt <- seq(1,n,1)
+  dN_dt <- seq(1,n,1)
+  ddetr_dt <- seq(1,n,1)
   
   # calculate growth rate
-  I = lightloss(phi, Det, params)
+  I = lightloss(phi, detr, params)
   growth.L <- I / (param.HI + I)
   growth.N <- N / (param.HN + N)
   
@@ -158,15 +179,15 @@ derivative = function(t, Y, params) {
   
   
   for (i in 1:n){
-    dphi_dt[i] <- growth[i]*phi[i] - param.m*phi[i] - param.gamma*phi[i]^2 - (J[i+1]- J[i])/param.deltaZ
-    dN_dt[i] <- -param.yield*growth[i]*phi[i] + param.rem*Det[i] - (JN[i+1]- JN[i])/param.deltaZ
-    dDet_dt[i] <- param.m*phi[i] + param.gamma*phi[i]^2 - (JDet[i+1]- JDet[i])/param.deltaZ
+    dphi_dt[i] <- (growth[i]*phi[i] - param.m*phi[i] - param.gamma*phi[i]^2) - (J[i+1]- J[i])/param.deltaZ
+    dN_dt[i] <- (-growth[i]*phi[i] + param.rem*detr[i]) - (JN[i+1] - JN[i])/param.deltaZ
+    ddetr_dt[i] <- param.m*phi[i] + param.gamma*phi[i]^2 - param.rem*detr[i] - (JDet[i+1]- JDet[i])/param.deltaZ
   }
   
-  return( list(c(dphi_dt, dN_dt, dDet_dt)) )
+  return( list(c(dphi_dt, dN_dt, ddetr_dt)) )
 }
 
-times <- seq(0,100,1)  
+times <- seq(0,100,.1)  
 
 derivative.out <- ode(Y.init, times, derivative, parms = params)
 
@@ -182,6 +203,10 @@ image.plot(x = times, y = z, phi.out[,ncol(phi.out):1],
 image.plot(x = times, y = z, N.out[,ncol(N.out):2],
            ylab = "Distance from seabed [m]", xlab = "Days", col = hcl.colors(50, "viridis"),
            main = "Nutrients")
+
+image.plot(x = times, y = z, Det.out[,ncol(Det.out):2],
+           ylab = "Distance from seabed [m]", xlab = "Days", col = hcl.colors(50, "viridis"),
+           main = "Detritus")
 
 # # plot light as a function of depth
 # light <- sapply(seq_len(ncol(phi.out)), function(i) lightloss(phi.out[, i], param))
