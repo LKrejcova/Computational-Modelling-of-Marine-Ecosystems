@@ -116,7 +116,7 @@ Y.init <- c(phi,N,detr)
 
 # set up light intensity
 lightloss = function (P, D, param){
-  integral = cumsum((param.kw + param.kp*P*param.deltaZ) - 0.5*param.deltaZ*(param.kw + param.kp*P))
+  integral = cumsum(((param.kw + param.kp*(P+D))*param.deltaZ)) - 0.5*param.deltaZ*(param.kw + param.kp*(P+D))
   I <- param.Iin*exp(- integral)
   
   return(I)
