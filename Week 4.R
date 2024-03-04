@@ -69,21 +69,20 @@ n <- 75
 d <- 100 #[m]
 param.deltaZ <- d/n #[m]
 t <- 300
-param.u <- 0.5 #0.042 * 24 #[m/day]
-param.D <- 5 #[m^2/day]
+param.u <- 0 * 0.042 * 24 #[m/day]
+param.D <- 5e-5 #[m^2/day]
 z <- c()
 param.kw <-  0.0375 #[/m]
 param.kp <-  0.05 #[m^2 / mmol.N]
-param.Iin <- 350 * 60 * 60 * 24 #[µmol photons /m^2 /day]
-param.HI <- 30 * 60 * 60 *24 # [µmol photons / m^2 / day]
-param.gmax <- 0.5 #[/day]
-param.m <-  0.03 #[/day]
+param.Iin <- 200 #[W /m^2]
+param.m <-  0*0.03 #[/day]
 param.HN <-  0.3 # [mmol.N / m^3]
-param.Nb <- 3 # [mmol.N / m^3]
-param.yield <- 1e-9 # [mmol nutrient / cell]
+param.Nb <- 30 # [mmol.N / m^3]
 param.gamma <- 1.5 # [m^3 /mmol N / day]
 param.w <- 15 # [m/day]
-param.rem <- 0.1 # [/day]
+param.rem <- 0*0.1 # [/day]
+param.alpha <- 0.1 # [m^2 / W / day]
+param.mu <- 0.5 # [/ day]
 
 # reset graphical parameters
 #dev.off()
@@ -123,7 +122,7 @@ lightloss = function (P, D, param){
 }
 
 lightloss(P,D, params)
-
+plot(x = lightloss(phi,detr, params), y = n:1, col = "blue", type = "l")
 ##### Derivative function #####
 # leonor
 derivative = function(t, Y, params) {
