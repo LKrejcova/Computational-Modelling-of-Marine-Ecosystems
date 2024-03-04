@@ -12,7 +12,7 @@ n <- 20
 deltaZ <- 5
 depth <- n*deltaZ
 
-u <- 2
+u <- 2 *0
 D <- 0.1
 
 ##### Set up grid ####
@@ -62,6 +62,4 @@ par(mfrow = c(1,1))
 image(x = times, y = z, derivative.out[,ncol(derivative.out):2], 
       ylab = "Depth [m]", xlab = "Days", col = hcl.colors(50, "viridis"))
 
-
-image(t(derivative.out)[ncol(derivative.out):1,])
 

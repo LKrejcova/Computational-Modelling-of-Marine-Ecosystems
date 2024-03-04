@@ -74,6 +74,8 @@ times <- seq(0,200,1)
 
 derivative.out <- ode(phi, times, derivative, parms = params)
 
+phi.out <- derivative.out[,2:(n+1)]
+
 # time <- derivative.out[,1]
 # ph <- derivative.out[,ncol(derivative.out:2)]
 # image(time, z, ph, col = hcl.colors(20, "viridis"))
@@ -81,6 +83,18 @@ derivative.out <- ode(phi, times, derivative, parms = params)
 image(x = times, y = z, derivative.out[,ncol(derivative.out):2], 
       ylab = "Distance from seabed [m]", xlab = "Days", col = hcl.colors(50, "viridis"))
 
+# plot light and nutrient limitation as a function of depth
+growth.lim.L <- lightloss(phi.out[nrow(phi.out),]) / (H + lightloss(phi.out[nrow(phi.out),]))
+
+par(mar=c(5, 4, 4, 8), xpd=TRUE) # adds space next to the plot so we can put a legend there
+plot(x = growth.lim.L, y = n:1, type = "l", xlim = c(0, max(growth.lim.L)),
+     main = "Limitation by light or nutrients", ylab = "Distance from seabed [m]",
+     xlab = "Growth limitation factor", lwd = 3)
+legend("topright", inset=c(-0.3, 0), legend = c("Light"), lty = c(1,2), lwd = 2)
+
+plot(x = phi.out[nrow(phi.out),], y = n:1, type = "l",
+     main = "Limitation by light or nutrients", ylab = "Distance from seabed [m]",
+     xlab = "Cell concentration [cell/m^3]", lwd = 3)
 
 # for (n in seq(1, length(times), by = 5)) {
 #   plot(derivative.out[n, -1], -z, type = "l", col = "blue", xlim = c(0,500),
