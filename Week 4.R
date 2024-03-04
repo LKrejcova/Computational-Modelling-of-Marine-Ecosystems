@@ -66,10 +66,10 @@ library(fields)
 
 # new parameters in mmol.N
 n <- 75
-d <- 100 #[m]
+d <- 400 #[m]
 param.deltaZ <- d/n #[m]
 t <- 300
-param.u <- 0*1 #[m/day]
+param.u <- 0.1 #[m/day]
 param.D <- 5 #[m^2/day]
 z <- c()
 param.kw <-  0.0375 #[/m]
@@ -77,7 +77,7 @@ param.kp <-  0.05 #[m^2 / mmol.N]
 param.Iin <- 200 #[W /m^2]
 param.m <-  0.03 #[/day]
 param.HN <-  0.3 # [mmol.N / m^3]
-param.Nb <- 30 # [mmol.N / m^3]
+param.Nb <- 20 # [mmol.N / m^3]
 param.gamma <- 1.5 # [m^3 /mmol N / day]
 param.w <- 15 # [m/day]
 param.rem <- 0.1 # [/day]
@@ -186,7 +186,7 @@ derivative = function(t, Y, params) {
   return( list(c(dphi_dt, dN_dt, ddetr_dt)) )
 }
 
-times <- seq(0,500,.1)  
+times <- seq(0,3000,.1)  
 
 derivative.out <- ode(Y.init, times, derivative, parms = params)
 
@@ -194,18 +194,26 @@ phi.out <- derivative.out[,2:(n+1)]
 N.out <- derivative.out[,(n+2):(2*n+1)]
 Det.out <- derivative.out[, (2*n+2):(3*n+1)]
 
-# plots 
-image.plot(x = times, y = z, phi.out[,ncol(phi.out):1],
-           ylab = "Distance from seabed [m]", xlab = "Days", col = hcl.colors(50, "viridis"),
-           main = "Phytoplankton", legend.lab="mmol Nitrogen / m^3", legend.line = - 2.5)
-#
-image.plot(x = times, y = z, N.out[,ncol(N.out):2],
-           ylab = "Distance from seabed [m]", xlab = "Days", col = hcl.colors(50, "viridis"),
-           main = "Nutrients", legend.lab="mmol Nitrogen / m^3", legend.line = -2.5)
+#check if converged
+max((phi.out[nrow(phi.out),]-phi.out[nrow(phi.out)-1,])/phi.out[nrow(phi.out),])*100
+max((N.out[nrow(N.out),]-N.out[nrow(N.out)-1,])/N.out[nrow(N.out),])*100
+max((Det.out[nrow(Det.out),]-Det.out[nrow(Det.out)-1,])/Det.out[nrow(Det.out),])*100
 
-image.plot(x = times, y = z, Det.out[,ncol(Det.out):2],
-           ylab = "Distance from seabed [m]", xlab = "Days", col = hcl.colors(50, "viridis"),
-           main = "Detritus", legend.lab="mmol Nitrogen / m^3", legend.line = - 2.5)
+# plots 
+# image.plot(x = times, y = z, phi.out[,ncol(phi.out):1],
+#            ylab = "Distance from seabed [m]", xlab = "Days", col = hcl.colors(50, "viridis"),
+#            main = "Phytoplankton", legend.lab="mmol Nitrogen / m^3", legend.line = - 2.5,
+#            cex.lab = 1.5, cex.axis = 1.5, legend.cex = 1.5)
+# #
+# image.plot(x = times, y = z, N.out[,ncol(N.out):2],
+#            ylab = "Distance from seabed [m]", xlab = "Days", col = hcl.colors(50, "viridis"),
+#            main = "Nutrients", legend.lab="mmol Nitrogen / m^3", legend.line = -2.5,
+#            cex.lab = 1.5, cex.axis = 1.5, legend.cex = 1.5)
+# 
+# image.plot(x = times, y = z, Det.out[,ncol(Det.out):2],
+#            ylab = "Distance from seabed [m]", xlab = "Days", col = hcl.colors(50, "viridis"),
+#            main = "Detritus", legend.lab="mmol Nitrogen / m^3", legend.line = - 2.5,
+#            cex.lab = 1.5, cex.axis = 1.5, legend.cex = 1.5)
 
 # plot light as a function of depth
 #light <- sapply(seq_len(ncol(phi.out)), function(i) lightloss(phi.out[, i],  param))
@@ -214,30 +222,54 @@ image.plot(x = times, y = z, Det.out[,ncol(Det.out):2],
 #            ylab = "Distance from seabed [m]", xlab = "Days", col = hcl.colors(50, "viridis"),
 #            main = "Light intensity [µmol photons/m2/day]")
 
-plot(x = lightloss(phi.out[nrow(phi.out),], Det.out[nrow(Det.out),],  params), y = n:1, type = "l", main = "Light intensity",
-     ylab = "Distance from seabed [m]", xlab = "Light intensity [mmol photon/ m^2 / day]",
-     pch = 3, lwd = 2)
+plot(x = lightloss(phi.out[nrow(phi.out),], Det.out[nrow(Det.out),],  params), y = seq(d,1,-param.deltaZ), type = "l", main = "Light intensity",
+     ylab = "Distance from seabed [m]", xlab = "Light intensity [W/m^2]",
+     pch = 3, lwd = 2.5, cex.lab = 1.5, cex.axis = 1.5, cex.main = 2)
 param.kp <- 0
-lines(x = lightloss(phi.out[nrow(phi.out),], Det.out[nrow(Det.out),], params), y = n:1, type = "l", lty = 2, lwd = 2)
-legend("bottomright", legend = c("Self-shading", "No self-shading"), lty = c(1,2), lwd = 2)
-param.kp <- 15e-12 #[m^2 / cell]
-grid()
+lines(x = lightloss(phi.out[nrow(phi.out),], Det.out[nrow(Det.out),], params), y = seq(d,1,-param.deltaZ), 
+      type = "l", lty = 2.5, lwd = 2, col = "red")
+grid(lwd = 1.5, col = "dimgrey")
+legend("bottomright", legend = c("Self-shading", "No self-shading"), lty = c(1,2), lwd = 2, col = c("black", "red"))
+param.kp <- 0.05 #[m^2 / mmolN]
+
 
 # plot light and nutrient limitation as a function of depth
 growth.lim.L <- param.alpha*lightloss(tail(phi.out,1), tail(Det.out,1)) / sqrt(param.mu^2 + (param.alpha*lightloss(tail(phi.out,1), tail(Det.out,1)))^2) 
 growth.lim.N <- tail(N.out,1) / (param.HN + tail(N.out,1))
 
 
-par(mar=c(5, 4, 4, 8), xpd=TRUE) # adds space next to the plot so we can put a legend there
-plot(x = growth.lim.L, y = n:1, type = "l", xlim = c(0, max(growth.lim.L)),
+plot(x = growth.lim.L, y = seq(d,1,-param.deltaZ), type = "l", xlim = c(0, max(growth.lim.L)),
      main = "Limitation by light or nutrients", ylab = "Distance from seabed [m]",
-     xlab = "Growth limitation factor", lwd = 3)
-lines(x = growth.lim.N, y = n:1, type = "l", lwd = 3, lty = 2)
-legend("topright", inset=c(-0.3, 0), legend = c("Light", "Nutrients"), lty = c(1,2), lwd = 2)
-
-lines(x = phi.out[nrow(phi.out),], y = n:1, type = "l",
+     xlab = "Growth limitation factor", lwd = 3, cex.lab = 1.5, cex.axis = 1.5, cex.main = 2, lty = 2)
+lines(x = growth.lim.N, y = seq(d,1,-param.deltaZ), type = "l", lwd = 3, lty = 1)
+legend("bottomleft", inset=c(0.1, 0), legend = c("Light", "Nutrients"), lty = c(2,1), lwd = 3, cex = 1.5, bty = "n")
+grid(lwd = 1.5, col = "dimgrey")
+#legend("topright", inset=c(-0.3, 0), legend = c("Light", "Nutrients"), lty = c(1,2), lwd = 2, cex = 1.1, bty = "n")
+lines(x = phi.out[nrow(phi.out),], y = seq(d,1,-param.deltaZ), type = "l",
       main = "Limitation by light or nutrients", ylab = "Distance from seabed [m]",
       xlab = "Cell concentration [cell/m^3]", lwd = 3, col = "red")
+
+# plot steady state solution
+# normalize function
+normalize_min_max <- function(x) {
+  (x - min(x)) / (max(x) - min(x))
+}
+
+phi.norm <- normalize_min_max(tail(phi.out,1))
+N.norm <- normalize_min_max(tail(N.out,1))
+Det.norm <- normalize_min_max(tail(Det.out,1))
+light.norm <- normalize_min_max(lightloss(tail(phi.out,1), tail(Det.out,1)))
+
+plot(x = phi.norm, y = seq(d,1,-param.deltaZ), type = "l", lwd = 3, col = "#009e73",
+     xlab = "Normalized concentrations of P, N, and D, and light intensity",
+     ylab = "Distance from seabed [m]", cex.lab = 1.5, cex.axis = 1.5)
+grid(lwd = 1.5, col = "dimgrey")
+lines(x = N.norm, y = seq(d,1,-param.deltaZ), type = "l", lwd = 3, col = "#cc79a7")
+lines(x = Det.norm, y = seq(d,1,-param.deltaZ), type = "l", lwd = 3, col = "#d55e00")
+lines(x = light.norm, y = seq(d,1,-param.deltaZ), type = "l", lwd = 3, lty = 2)
+legend("bottomleft", inset=c(0.5, 0), legend = c("Phytoplankton", "Nutrients", "Detritus", "Light"),
+       lty = c(1,1,1,2), lwd = 3, cex = 1.5, bty = "n", col = c("#009e73", "#cc79a7", "#d55e00",1))
+
 
 # alternative approach
 # light <- lightloss(phi.out[,1])
