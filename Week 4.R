@@ -69,18 +69,18 @@ n <- 75
 d <- 100 #[m]
 param.deltaZ <- d/n #[m]
 t <- 300
-param.u <- 0 * 0.042 * 24 #[m/day]
-param.D <- 5e-5 #[m^2/day]
+param.u <- 0*1 #[m/day]
+param.D <- 5 #[m^2/day]
 z <- c()
 param.kw <-  0.0375 #[/m]
 param.kp <-  0.05 #[m^2 / mmol.N]
 param.Iin <- 200 #[W /m^2]
-param.m <-  0*0.03 #[/day]
+param.m <-  0.03 #[/day]
 param.HN <-  0.3 # [mmol.N / m^3]
 param.Nb <- 30 # [mmol.N / m^3]
 param.gamma <- 1.5 # [m^3 /mmol N / day]
 param.w <- 15 # [m/day]
-param.rem <- 0*0.1 # [/day]
+param.rem <- 0.1 # [/day]
 param.alpha <- 0.1 # [m^2 / W / day]
 param.mu <- 0.5 # [/ day]
 
@@ -89,25 +89,25 @@ param.mu <- 0.5 # [/ day]
 
 params <- list(param.D = param.D , param.Iin = param.Iin, param.kw = 0.2, param.kp = param.kp,
                param.m = param.m, param.u = param.u, d = d, param.deltaZ = param.deltaZ, n = n,
-               param.gmax = param.gmax, param.HI = param.HI, param.HN = param.HN)
+               param.mu = param.mu, param.HN = param.HN)
 
 no.shading <- list(param.D = param.D , param.Iin = param.Iin, param.kw = 0.2, param.kp = 0,
                    param.m = param.m, param.u = param.u, d = d, param.deltaZ = param.deltaZ, n = n,
-                   param.gmax = param.gmax, param.HI = param.HI, param.HN = param.HN)
+                   param.mu = param.mu, param.HN = param.HN)
 
 
 ##### Set up grid ####
 z = seq(param.deltaZ/2, by = param.deltaZ, to = d)
 
 ##### Initial conditions #####
-phi <- rep(10,n) # set up phi0
+phi <- rep(1,n) # set up phi0
 #phi[10] <- 1000
 
-N <- rep(1,n) # set up N0
+N <- rep(20,n) # set up N0
 
 P <- phi[1]
 
-detr <- rep(1,n)
+detr <- rep(0,n)
 
 D <- detr[1]
 
@@ -121,10 +121,9 @@ lightloss = function (P, D, param){
   return(I)
 }
 
-lightloss(P,D, params)
 plot(x = lightloss(phi,detr, params), y = n:1, col = "blue", type = "l")
+
 ##### Derivative function #####
-# leonor
 derivative = function(t, Y, params) {
   
   phi <- Y[1:n]
@@ -156,10 +155,10 @@ derivative = function(t, Y, params) {
   JN[n+1] <- -param.D*(param.Nb-N[n])/param.deltaZ
   
   Ja_D[1] <- 0
-  Ja_D[n+1] <- 0
+  Ja_D[n+1] <- param.w*detr[n]
   
   Jd_D[1] <- 0
-  Jd_D[n+1] <- param.w*detr[n]/param.deltaZ
+  Jd_D[n+1] <- 0
   
   J <- Ja + Jd 
   
@@ -171,22 +170,23 @@ derivative = function(t, Y, params) {
   
   # calculate growth rate
   I = lightloss(phi, detr, params)
-  growth.L <- I / (param.HI + I)
+  #growth.L <- I / (param.HI + I)
+  growth.L <- param.alpha*I / sqrt(param.mu^2 + (param.alpha*I)^2)
   growth.N <- N / (param.HN + N)
   
-  growth <- param.gmax * pmin(growth.L, growth.N)
+  growth <- param.mu * pmin(growth.L,growth.N)
   
   
   for (i in 1:n){
-    dphi_dt[i] <- (growth[i]*phi[i] - param.m*phi[i] - param.gamma*phi[i]^2) - (J[i+1]- J[i])/param.deltaZ
-    dN_dt[i] <- (-growth[i]*phi[i] + param.rem*detr[i]) - (JN[i+1] - JN[i])/param.deltaZ
-    ddetr_dt[i] <- param.m*phi[i] + param.gamma*phi[i]^2 - param.rem*detr[i] - (JDet[i+1]- JDet[i])/param.deltaZ
+    dphi_dt[i] <- growth[i]*phi[i] - param.m*phi[i] - param.gamma*phi[i]^2 - (J[i+1] - J[i])/param.deltaZ
+    dN_dt[i] <- -growth[i]*phi[i] + param.rem*detr[i] - (JN[i+1] - JN[i])/param.deltaZ
+    ddetr_dt[i] <- param.m*phi[i] + param.gamma*phi[i]^2 - param.rem*detr[i] - (JDet[i+1] - JDet[i])/param.deltaZ
   }
   
   return( list(c(dphi_dt, dN_dt, ddetr_dt)) )
 }
 
-times <- seq(0,100,.1)  
+times <- seq(0,500,.1)  
 
 derivative.out <- ode(Y.init, times, derivative, parms = params)
 
@@ -197,47 +197,47 @@ Det.out <- derivative.out[, (2*n+2):(3*n+1)]
 # plots 
 image.plot(x = times, y = z, phi.out[,ncol(phi.out):1],
            ylab = "Distance from seabed [m]", xlab = "Days", col = hcl.colors(50, "viridis"),
-           main = "Phytoplankton")
+           main = "Phytoplankton", legend.lab="mmol Nitrogen / m^3", legend.line = - 2.5)
 #
 image.plot(x = times, y = z, N.out[,ncol(N.out):2],
            ylab = "Distance from seabed [m]", xlab = "Days", col = hcl.colors(50, "viridis"),
-           main = "Nutrients")
+           main = "Nutrients", legend.lab="mmol Nitrogen / m^3", legend.line = -2.5)
 
 image.plot(x = times, y = z, Det.out[,ncol(Det.out):2],
            ylab = "Distance from seabed [m]", xlab = "Days", col = hcl.colors(50, "viridis"),
-           main = "Detritus")
+           main = "Detritus", legend.lab="mmol Nitrogen / m^3", legend.line = - 2.5)
 
-# # plot light as a function of depth
-# light <- sapply(seq_len(ncol(phi.out)), function(i) lightloss(phi.out[, i], param))
-# 
+# plot light as a function of depth
+#light <- sapply(seq_len(ncol(phi.out)), function(i) lightloss(phi.out[, i],  param))
+
 # image.plot(x = times, y = z, light[,ncol(light):1],
 #            ylab = "Distance from seabed [m]", xlab = "Days", col = hcl.colors(50, "viridis"),
 #            main = "Light intensity [µmol photons/m2/day]")
-# 
-# plot(x = lightloss(phi.out[nrow(phi.out),], params), y = n:1, type = "l", main = "Light intensity",
-#      ylab = "Distance from seabed [m]", xlab = "Light intensity [mmol photon/ m^2 / day]",
-#      pch = 3, lwd = 2)
-# param.kp <- 0
-# lines(x = lightloss(phi.out[nrow(phi.out),],no.shading), y = n:1, type = "l", lty = 2, lwd = 2)
-# legend("bottomright", legend = c("Self-shading", "No self-shading"), lty = c(1,2), lwd = 2)
-# param.kp <- 15e-12 #[m^2 / cell]
-# grid()
 
-# # plot light and nutrient limitation as a function of depth
-# growth.lim.L <- lightloss(phi.out[nrow(phi.out),]) / (param.HI + lightloss(phi.out[nrow(phi.out),]))
-# growth.lim.N <- N.out[nrow(N.out),] / (param.HN + N.out[nrow(N.out),])
-# 
-# 
-# par(mar=c(5, 4, 4, 8), xpd=TRUE) # adds space next to the plot so we can put a legend there
-# plot(x = growth.lim.L, y = n:1, type = "l", xlim = c(0, max(growth.lim.N)),
-#      main = "Limitation by light or nutrients", ylab = "Distance from seabed [m]",
-#      xlab = "Growth limitation factor", lwd = 3)
-# lines(x = growth.lim.N, y = n:1, type = "l", lwd = 3, lty = 2)
-# legend("topright", inset=c(-0.5, 0), legend = c("Light", "Nutrients"), lty = c(1,2), lwd = 2)
-# 
-# plot(x = phi.out[nrow(phi.out),], y = n:1, type = "l",
-#      main = "Limitation by light or nutrients", ylab = "Distance from seabed [m]",
-#      xlab = "Cell concentration [cell/m^3]", lwd = 3)
+plot(x = lightloss(phi.out[nrow(phi.out),], Det.out[nrow(Det.out),],  params), y = n:1, type = "l", main = "Light intensity",
+     ylab = "Distance from seabed [m]", xlab = "Light intensity [mmol photon/ m^2 / day]",
+     pch = 3, lwd = 2)
+param.kp <- 0
+lines(x = lightloss(phi.out[nrow(phi.out),], Det.out[nrow(Det.out),], params), y = n:1, type = "l", lty = 2, lwd = 2)
+legend("bottomright", legend = c("Self-shading", "No self-shading"), lty = c(1,2), lwd = 2)
+param.kp <- 15e-12 #[m^2 / cell]
+grid()
+
+# plot light and nutrient limitation as a function of depth
+growth.lim.L <- param.alpha*lightloss(tail(phi.out,1), tail(Det.out,1)) / sqrt(param.mu^2 + (param.alpha*lightloss(tail(phi.out,1), tail(Det.out,1)))^2) 
+growth.lim.N <- tail(N.out,1) / (param.HN + tail(N.out,1))
+
+
+par(mar=c(5, 4, 4, 8), xpd=TRUE) # adds space next to the plot so we can put a legend there
+plot(x = growth.lim.L, y = n:1, type = "l", xlim = c(0, max(growth.lim.L)),
+     main = "Limitation by light or nutrients", ylab = "Distance from seabed [m]",
+     xlab = "Growth limitation factor", lwd = 3)
+lines(x = growth.lim.N, y = n:1, type = "l", lwd = 3, lty = 2)
+legend("topright", inset=c(-0.3, 0), legend = c("Light", "Nutrients"), lty = c(1,2), lwd = 2)
+
+lines(x = phi.out[nrow(phi.out),], y = n:1, type = "l",
+      main = "Limitation by light or nutrients", ylab = "Distance from seabed [m]",
+      xlab = "Cell concentration [cell/m^3]", lwd = 3, col = "red")
 
 # alternative approach
 # light <- lightloss(phi.out[,1])
