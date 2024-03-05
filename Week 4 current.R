@@ -200,7 +200,7 @@ max((phi.out[nrow(phi.out),]-phi.out[nrow(phi.out)-1,])/phi.out[nrow(phi.out),])
 max((N.out[nrow(N.out),]-N.out[nrow(N.out)-1,])/N.out[nrow(N.out),])*100
 max((Det.out[nrow(Det.out),]-Det.out[nrow(Det.out)-1,])/Det.out[nrow(Det.out),])*100
 
-# plots 
+# plots
 # image.plot(x = times, y = z, phi.out[,ncol(phi.out):1],
 #            ylab = "Distance from seabed [m]", xlab = "Days", col = hcl.colors(50, "viridis"),
 #            main = "Phytoplankton", legend.lab="mmol Nitrogen / m^3", legend.line = - 2.5,
@@ -210,7 +210,7 @@ max((Det.out[nrow(Det.out),]-Det.out[nrow(Det.out)-1,])/Det.out[nrow(Det.out),])
 #            ylab = "Distance from seabed [m]", xlab = "Days", col = hcl.colors(50, "viridis"),
 #            main = "Nutrients", legend.lab="mmol Nitrogen / m^3", legend.line = -2.5,
 #            cex.lab = 1.5, cex.axis = 1.5, legend.cex = 1.5)
-# 
+#
 # image.plot(x = times, y = z, Det.out[,ncol(Det.out):2],
 #            ylab = "Distance from seabed [m]", xlab = "Days", col = hcl.colors(50, "viridis"),
 #            main = "Detritus", legend.lab="mmol Nitrogen / m^3", legend.line = - 2.5,
@@ -227,7 +227,7 @@ plot(x = lightloss(phi.out[nrow(phi.out),], Det.out[nrow(Det.out),],  params), y
      ylab = "Distance from seabed [m]", xlab = "Light intensity [W/m^2]",
      pch = 3, lwd = 2.5, cex.lab = 1.5, cex.axis = 1.5, cex.main = 2)
 param.kp <- 0
-lines(x = lightloss(phi.out[nrow(phi.out),], Det.out[nrow(Det.out),], params), y = seq(d,1,-param.deltaZ), 
+lines(x = lightloss(phi.out[nrow(phi.out),], Det.out[nrow(Det.out),], params), y = seq(d,1,-param.deltaZ),
       type = "l", lty = 2.5, lwd = 2, col = "red")
 grid(lwd = 1.5, col = "dimgrey")
 legend("bottomright", legend = c("Self-shading", "No self-shading"), lty = c(1,2), lwd = 2, col = c("black", "red"))
@@ -235,7 +235,7 @@ param.kp <- 0.05 #[m^2 / mmolN]
 
 
 # plot light and nutrient limitation as a function of depth
-growth.lim.L <- param.alpha*lightloss(tail(phi.out,1), tail(Det.out,1)) / sqrt(param.mu^2 + (param.alpha*lightloss(tail(phi.out,1), tail(Det.out,1)))^2) 
+growth.lim.L <- param.alpha*lightloss(tail(phi.out,1), tail(Det.out,1)) / sqrt(param.mu^2 + (param.alpha*lightloss(tail(phi.out,1), tail(Det.out,1)))^2)
 growth.lim.N <- tail(N.out,1) / (param.HN + tail(N.out,1))
 growth.lim.tot <- pmin(growth.lim.L, growth.lim.N)
 
@@ -272,7 +272,7 @@ lines(x = light.norm, y = seq(d,1,-param.deltaZ), type = "l", lwd = 3, lty = 2)
 legend("bottomleft", inset=c(0.5, 0), legend = c("Phytoplankton", "Nutrients", "Detritus", "Light"),
        lty = c(1,1,1,2), lwd = 3, cex = 1.5, bty = "n", col = c("#009e73", "#cc79a7", "#d55e00",1))
 
-# Sensitivity analysis 
+# Sensitivity analysis
 
 
 # find depth of maximum phytoplankton concentration
@@ -289,53 +289,117 @@ plot(y = seq(0, 0.4, 0.1), x = seq(0.03, 0.07, 0.01), col = 0,
      xlab = "Light absorbtion of phytoplankton [m^2/mmolN]",
      ylab = "Phytoplankton concentration [mmolN / m^3]")
 
-plot(x = phi.out[nrow(phi.out),], y = seq(d,1,-param.deltaZ), type = "l", xlim = c(0,0.3),
-      main = "Limitation by light or nutrients", ylab = "Distance from seabed [m]",
-      xlab = "Cell concentration [cell/m^3]", lwd = 3, col = "1")
+
+plot(x = phi.out[nrow(phi.out),], y = seq(d,1,-param.deltaZ), type = "l", xlim = c(0,0.2),
+      main = "Effect of kp", ylab = "Distance from seabed [m]",
+      xlab = "Phytoplankton concentration [mmolN/m^3]", lwd = 0, col = "1",
+     cex.lab = 1.5, cex.axis = 1.5)
+
 max.phi <- c()
 
+#define color palette
+palette <- c("#9d9d00", "#709519", "#448b2e", "#087e3e", "#006f4b", 
+                          "#005e51", "#004e4f", "#003f49", "#003040", "#002233")
 
-# Generate the color palette
-palette <- c("#006400", "#0B6623", "#1F7742", "#339856", "#4D9F67", "#68B578", "#83C989", "#A0DD9D", "#C0F0B4", "#E0FFD1")
-
-# loop over different kp values
+# loop over different kp values and plot phi.out
 for (i in 1:10){
   param.kp <- (seq(0.03, 0.07, 0.005))[i]
   
-  times <- seq(0,500,1)  
+  times <- seq(0,3000,1)  
   
   derivative.out <- ode(Y.init, times, derivative, parms = params)
   
   phi.out <- derivative.out[,2:(n+1)]
   N.out <- derivative.out[,(n+2):(2*n+1)]
-  lines(x = phi.out[nrow(phi.out),], y = seq(d,1,-param.deltaZ), type = "l", col = palette[i])
+  lines(x = phi.out[nrow(phi.out),], y = seq(d,1,-param.deltaZ), type = "l", col = palette[i],
+        lwd = 1.3)
   max.phi[i] <- find.max(tail(phi.out,1), params)[1]
-  
-  #points(y = find.max(tail(phi.out,1), params)[1], x = param.kp )
 }
-
+grid(col = "dimgrey")
+legend("bottomright", legend = seq(0.03, 0.07, 0.005), col = palette[1:10], lwd = 2)
 plot(y = max.phi[1:9], x = seq(0.03, 0.07, 0.005), type = "l")
 
-plot(y = seq(0, 4, 1), x = seq(0.03, 0.07, 0.01), col = 0,
-     main = "Effect of light absorbtion of phytoplankton on depth of phytoplankton maximum",
-     xlab = "Light absorbtion of phytoplankton [m^2/mmolN]",
-     ylab = "Phytoplankton maximum depth [m]")
+param.kp <- 0.05 # reset kp
 
-# loop over different kp values
+##### effect of grazing
+plot(x = phi.out[nrow(phi.out),], y = seq(d,1,-param.deltaZ), type = "l", xlim = c(0,0.4),
+     main = "Effect of grazing", ylab = "Distance from seabed [m]",
+     xlab = "Phytoplankton concentration [mmolN/m^3]", lwd = 0, col = "1",
+     cex.lab = 1.5, cex.axis = 1.5)
+
+max.phi <- c()
+
+# loop over different gamma values and plot phi.out
 for (i in 1:10){
-  param.kp <- (seq(0.03, 0.07, 0.005))[i]
+  param.gamma <- (seq(0.5, 2.4, 0.2))[i]
   
-  times <- seq(0,500,1)  
+  times <- seq(0,3000,1)  
   
   derivative.out <- ode(Y.init, times, derivative, parms = params)
   
   phi.out <- derivative.out[,2:(n+1)]
   N.out <- derivative.out[,(n+2):(2*n+1)]
-  
-  find.max(phi.out, params)
-  
-  points(y = find.max(phi.out, params)[2], x = param.kp )
+  lines(x = phi.out[nrow(phi.out),], y = seq(d,1,-param.deltaZ), type = "l", col = palette[i],
+        lwd = 1.3)
+  max.phi[i] <- find.max(tail(phi.out,1), params)[1]
 }
+grid(col = "dimgrey")
+legend("bottomright", legend =seq(0.5, 2.4, 0.2), col = palette[1:10], lwd = 2)
+plot(y = max.phi[1:9], x = seq(0.03, 0.07, 0.005), type = "l")
+
+param.gamma <- 1.5 # reset gamma
+
+
+##### effect of light sensitivity
+plot(x = phi.out[nrow(phi.out),], y = seq(d,1,-param.deltaZ), type = "l", xlim = c(0,0.2),
+     main = "Effect of light sensitivity", ylab = "Distance from seabed [m]",
+     xlab = "Phytoplankton concentration [mmolN/m^3]", lwd = 0, col = "1",
+     cex.lab = 1.5, cex.axis = 1.5)
+
+max.phi <- c()
+
+# loop over different alpha values and plot phi.out
+for (i in 1:10){
+  param.alpha <- (seq(0.01, 0.19, 0.02))[i]
+  
+  times <- seq(0,3000,1)  
+  
+  derivative.out <- ode(Y.init, times, derivative, parms = params)
+  
+  phi.out <- derivative.out[,2:(n+1)]
+  N.out <- derivative.out[,(n+2):(2*n+1)]
+  lines(x = phi.out[nrow(phi.out),], y = seq(d,1,-param.deltaZ), type = "l", col = palette[i],
+        lwd = 1.3)
+  max.phi[i] <- find.max(tail(phi.out,1), params)[1]
+}
+grid(col = "dimgrey")
+legend("bottomright", legend = seq(0.01, 0.19, 0.02), col = palette[1:10], lwd = 2)
+plot(y = max.phi[1:9], x = seq(0.03, 0.07, 0.005), type = "l")
+
+param.alpha <- 0.1 # reset gamma
+
+
+
+# plot(y = seq(0, 4, 1), x = seq(0.03, 0.07, 0.01), col = 0,
+#      main = "Effect of light absorbtion of phytoplankton on depth of phytoplankton maximum",
+#      xlab = "Light absorbtion of phytoplankton [m^2/mmolN]",
+#      ylab = "Phytoplankton maximum depth [m]")
+# 
+# # loop over different kp values
+# for (i in 1:10){
+#   param.kp <- (seq(0.03, 0.07, 0.005))[i]
+#   
+#   times <- seq(0,500,1)  
+#   
+#   derivative.out <- ode(Y.init, times, derivative, parms = params)
+#   
+#   phi.out <- derivative.out[,2:(n+1)]
+#   N.out <- derivative.out[,(n+2):(2*n+1)]
+#   
+#   find.max(phi.out, params)
+#   
+#   points(y = find.max(phi.out, params)[2], x = param.kp )
+# }
 
 plot(y = seq(0, 100, 25), x = seq(0, 100, 25), col = 0,
      main = "Effect of light absorbtion on phytoplankton maximum",
